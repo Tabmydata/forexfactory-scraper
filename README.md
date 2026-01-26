@@ -136,6 +136,7 @@ pip install -r requirements.txt
 
 ```bash
 python -m src.forexfactory.main --start 2024-03-21 --end 2024-03-25 --csv forex_factory_cache.csv --tz Asia/Tehran --details
+
 ```
 
 This command scrapes Forex Factory events from March 21, 2024, to March 25, 2024, including detailed specifications for each event, and saves the data to `forex_factory_cache.csv` with Tehran timezone.

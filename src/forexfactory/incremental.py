@@ -16,11 +16,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def scrape_incremental(from_date, to_date, output_csv, tzname="Asia/Tehran", scrape_details=False):
+def scrape_incremental(from_date, to_date, output_csv, tzname="Asia/Tehran", scrape_details=False, impact_filter=None, keep_currencies=None):
     """
     Example: day-by-day approach but we only re-scrape if day is missing or incomplete.
     For simplicity, let's re-scrape entire range. Then we can add logic if needed.
     """
     # You can implement a logic that checks existing_df if days are complete or not.
     # For now, let's just call scrape_range_pandas:
-    scrape_range_pandas(from_date, to_date, output_csv, tzname=tzname, scrape_details=scrape_details)
+    scrape_range_pandas(from_date, to_date, output_csv, tzname=tzname, scrape_details=scrape_details, impact_filter=impact_filter, keep_currencies=keep_currencies)

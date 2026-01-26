@@ -40,10 +40,15 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
     date_str = the_date.strftime('%b%d.%Y').lower()
     url = f"https://www.forexfactory.com/calendar?day={date_str}"
     logger.info(f"Scraping URL: {url}")
-    driver.get(url)
+    try:
+        driver.get(url)
+    except Exception as e:
+        logger.warning(f"Failed to load page for {the_date.date()}: {e}")
+        return pd.DataFrame(
+            columns=["DateTime", "Currency", "Impact", "Event", "Actual", "Forecast", "Previous", "Detail"])
 
     try:
-        WebDriverWait(driver, 15).until(
+        WebDriverWait(driver, 30).until(  # Increased wait time
             EC.visibility_of_element_located((By.XPATH, '//table[contains(@class,"calendar__table")]'))
         )
     except TimeoutException:
@@ -54,6 +59,7 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
     rows = driver.find_elements(By.XPATH, '//tr[contains(@class,"calendar__row")]')
     data_list = []
     current_day = the_date
+    last_clock_time = None
 
     for row in rows:
         row_class = row.get_attribute("class")
@@ -91,7 +97,9 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         # Determine event time based on text
         event_dt = current_day
         time_lower = time_text.lower()
-        if "day" in time_lower:
+        if not time_lower and last_clock_time is not None:
+            event_dt = event_dt.replace(hour=last_clock_time[0], minute=last_clock_time[1], second=0)
+        elif "day" in time_lower:
             event_dt = event_dt.replace(hour=23, minute=59, second=59)
         elif "data" in time_lower:
             event_dt = event_dt.replace(hour=0, minute=0, second=1)
@@ -106,6 +114,7 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
                 if ampm == 'am' and hh == 12:
                     hh = 0
                 event_dt = event_dt.replace(hour=hh, minute=mm, second=0)
+                last_clock_time = (hh, mm)
 
         # Compute a unique key for the event using DateTime, Currency, and Event
         unique_key = f"{event_dt.isoformat()}_{currency_text}_{event_text}"
@@ -170,7 +179,7 @@ def scrape_day(driver, the_date: datetime, existing_df: pd.DataFrame, scrape_det
 
 
 def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str, tzname="Asia/Tehran",
-                        scrape_details=False):
+                        scrape_details=False, impact_filter=None, keep_currencies=None):
     from .csv_util import ensure_csv_header, read_existing_data, merge_new_data, write_data_to_csv
 
     ensure_csv_header(output_csv)
@@ -178,6 +187,7 @@ def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str,
 
     driver = uc.Chrome()
     driver.set_window_size(1400, 1000)
+    driver.set_page_load_timeout(300)  # Increase timeout to 5 minutes
 
     total_new = 0
     day_count = (to_date - from_date).days + 1
@@ -188,6 +198,12 @@ def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str,
         while current_day <= to_date:
             logger.info(f"Scraping day {current_day.strftime('%Y-%m-%d')}...")
             df_new = scrape_day(driver, current_day, existing_df, scrape_details=scrape_details)
+
+            if impact_filter and not df_new.empty:
+                df_new = df_new[df_new['Impact'].str.lower().str.contains('|'.join(impact_filter))]
+
+            if keep_currencies and not df_new.empty:
+                df_new = df_new[df_new['Currency'].isin(keep_currencies)]
 
             if not df_new.empty:
                 merged_df = merge_new_data(existing_df, df_new)

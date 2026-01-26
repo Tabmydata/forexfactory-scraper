@@ -3,3 +3,6 @@ forex_factory_catalog.csv
 logs_file
 chromedriver.exe
 venv
+__pycache__/# Python cache files
+*.pyc
+*.pyo   
