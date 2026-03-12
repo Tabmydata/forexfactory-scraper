@@ -185,7 +185,7 @@ def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str,
     ensure_csv_header(output_csv)
     existing_df = read_existing_data(output_csv)
 
-    driver = uc.Chrome()
+    driver = uc.Chrome(version_main=145)
     driver.set_window_size(1400, 1000)
     driver.set_page_load_timeout(300)  # Increase timeout to 5 minutes
 
