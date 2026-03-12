@@ -9,4 +9,4 @@ __pycache__/
 econ_2026.csv
 econ_2026.json
 *.log
-*.md
+DEPLOYMENT_OPTIONS.md

@@ -1,240 +1,146 @@
 # Forex Factory Scraper
 
-A robust and flexible web scraper for [Forex Factory](https://www.forexfactory.com/) calendar events. This tool leverages Selenium and pandas to efficiently collect, update, and manage Forex Factory event data, supporting incremental scraping and optional detailed event information.
-## Download 
-You can Download csv date from [huggingface](https://huggingface.co/datasets/Ehsanrs2/Forex_Factory_Calendar)
+A robust web scraper for [Forex Factory](https://www.forexfactory.com/) economic calendar events. Built with Selenium and pandas, supporting incremental scraping and automated daily actual value updates.
+
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Scripts](#scripts)
 - [Dependencies](#dependencies)
-- [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
 - [License](#license)
 
 ## Features
 
-- **Incremental Scraping:** Only fetch new or updated events based on existing CSV data.
-- **Detailed Event Information:** Optionally scrape detailed specifications for each event.
-- **Flexible Date Range:** Specify custom date ranges for scraping.
-- **Timezone Support:** Configure the timezone according to your preference.
-- **Data Management with pandas:** Efficiently handle data merging and updates using pandas.
-- **Error Handling:** Robust handling of common web scraping issues like stale elements and timeouts.
-- **Command-Line Interface:** Easy-to-use CLI with configurable parameters.
+- **Incremental Scraping:** Only fetches new or updated events, skipping already-scraped data
+- **Daily Actual Updates:** Automated script to update actual values every 4-6 hours via cron
+- **Flexible Date Range:** Specify any start/end date range
+- **Timezone Support:** Defaults to `Asia/Bangkok` (UTC+7)
+- **JSON Export:** Convert CSV output to JSON for backend consumption
+- **Filtering:** Filter by impact level and currency
 
 ## Installation
 
 ### Prerequisites
 
-- **Python 3.7+**: Ensure you have Python installed. You can download it from [python.org](https://www.python.org/downloads/).
+- Python 3.7+
+- Google Chrome (latest version recommended)
 
-### Step-by-Step Guide
+### Steps
 
-1. **Clone the Repository**
-
-   ```bash
-   git clone https://github.com/yourusername/forexfactory_scraper.git
-   cd forexfactory_scraper
-   ```
-
-2. **Create a Virtual Environment (Optional but Recommended)**
+1. **Clone the repository**
 
    ```bash
-   python -m venv venv
+   git clone https://github.com/Tabmydata/forexfactory-scraper.git
+   cd forexfactory-scraper
    ```
 
-   - **Activate the Virtual Environment:**
-     - **Windows:**
-       ```bash
-       venv\Scripts\activate
-       ```
-     - **macOS/Linux:**
-       ```bash
-       source venv/bin/activate
-       ```
-
-3. **Install Dependencies**
-
-   Ensure you have `pip` updated:
+2. **Create a virtual environment**
 
    ```bash
-   pip install --upgrade pip
+   python3 -m venv venv
+   source venv/bin/activate  # macOS/Linux
    ```
 
-   Install required packages:
+3. **Install dependencies**
 
    ```bash
    pip install -r requirements.txt
    ```
 
-   **Note:** Make sure `requirements.txt` includes all necessary libraries such as `selenium`, `pandas`, `undetected-chromedriver`, and others.
-
-4. **Download WebDriver**
-
-   The scraper uses `undetected-chromedriver` to handle dynamic content and bypass some scraping protections. No additional setup is required as `undetected-chromedriver` manages the ChromeDriver version automatically.
-
 ## Usage
-
-The main script can be executed via the command line, allowing you to specify various parameters such as the date range, output CSV file, timezone, and whether to scrape detailed event information.
 
 ### Command-Line Arguments
 
-- `--start`: **(Required)** Start date for scraping in `YYYY-MM-DD` format.
-- `--end`: **(Required)** End date for scraping in `YYYY-MM-DD` format.
-- `--csv`: **(Optional)** Output CSV file path. Default is `forex_factory_cache.csv`.
-- `--tz`: **(Optional)** Timezone for event dates. Default is `Asia/Tehran`.
-- `--details`: **(Optional)** Flag to enable scraping of detailed event information. If omitted, only basic event data is scraped.
-
-### Running the Scraper
-
-Navigate to the project root directory and execute the script using Python:
-
-```bash
-python -m src.forexfactory.main --start YYYY-MM-DD --end YYYY-MM-DD [--csv OUTPUT_CSV] [--tz TIMEZONE] [--details]
-```
+| Argument | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `--start` | Yes | — | Start date (YYYY-MM-DD) |
+| `--end` | Yes | — | End date (YYYY-MM-DD) |
+| `--csv` | No | `forex_factory_cache.csv` | Output CSV file path |
+| `--tz` | No | `Asia/Bangkok` | Timezone |
+| `--details` | No | false | Scrape detailed event info |
+| `--impact` | No | all | Filter by impact: `high,medium,low` |
+| `--keep-currencies` | No | all | Filter by currency: `USD EUR GBP` |
 
 ### Examples
 
-1. **Scrape Events from March 21, 2024, to March 25, 2024, Including Details**
+```bash
+# Scrape a specific week
+python3 -m src.forexfactory.main \
+  --start 2026-03-10 --end 2026-03-14 \
+  --csv econ_2026.csv
 
-   ```bash
-   python -m src.forexfactory.main --start 2024-03-21 --end 2024-03-25 --csv forex_factory_cache.csv --tz Asia/Tehran --details
-   ```
+# Scrape high-impact USD/EUR events only
+python3 -m src.forexfactory.main \
+  --start 2026-01-01 --end 2026-12-31 \
+  --csv econ_2026.csv \
+  --impact high \
+  --keep-currencies USD EUR
+```
 
-2. **Scrape Events from January 1, 2024, to January 31, 2024, Without Details**
+## Scripts
 
-   ```bash
-   python -m src.forexfactory.main --start 2024-01-01 --end 2024-01-31 --csv january_events.csv --tz Asia/Tehran
-   ```
+### scrape_2026.sh — Full year initial scrape
 
-3. **Scrape Events from February 15, 2024, to February 20, 2024, Saving to a Custom CSV File**
+```bash
+bash scrape_2026.sh
+```
 
-   ```bash
-   python -m src.forexfactory.main --start 2024-02-15 --end 2024-02-20 --csv feb_events.csv --tz Asia/Tehran
-   ```
+Scrapes month by month (Jan–Dec 2026) into a single `econ_2026.csv`, then converts to `econ_2026.json`. Run once on initial setup.
+
+### update_actuals.sh — Daily actual updates
+
+```bash
+bash update_actuals.sh
+```
+
+Scrapes the past 2 days through tomorrow to capture actual values for recently released events.
+
+**Set up cron to run every 4 hours:**
+
+```bash
+crontab -e
+# Add this line:
+0 */4 * * * /home/ubuntu/forexfactory-scraper/update_actuals.sh >> /home/ubuntu/forexfactory-scraper/actuals.log 2>&1
+```
+
+### to_json.py — Convert CSV to JSON
+
+```bash
+python3 to_json.py econ_2026.csv econ_2026.json
+```
 
 ## Dependencies
 
-All dependencies are listed in `requirements.txt`. Key libraries include:
-
-- [selenium](https://pypi.org/project/selenium/): For browser automation.
-- [pandas](https://pandas.pydata.org/): For data manipulation and management.
-- [undetected-chromedriver](https://pypi.org/project/undetected-chromedriver/): To bypass Selenium detection mechanisms.
-- [python-dateutil](https://dateutil.readthedocs.io/en/stable/): For advanced date handling.
-
-Install dependencies using:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Examples
-
-### Scraping with Details
-
-```bash
-python -m src.forexfactory.main --start 2024-03-21 --end 2024-03-25 --csv forex_factory_cache.csv --tz Asia/Tehran --details
-
-```
-
-This command scrapes Forex Factory events from March 21, 2024, to March 25, 2024, including detailed specifications for each event, and saves the data to `forex_factory_cache.csv` with Tehran timezone.
-
-### Scraping without Details
-
-```bash
-python -m src.forexfactory.main --start 2024-03-21 --end 2024-03-25 --csv forex_factory_cache.csv --tz Asia/Tehran
-```
-
-This command performs the same scraping without fetching detailed event specifications, resulting in a faster scraping process.
+- [selenium](https://pypi.org/project/selenium/) — browser automation
+- [pandas](https://pandas.pydata.org/) — data manipulation
+- [undetected-chromedriver](https://pypi.org/project/undetected-chromedriver/) — bypass detection mechanisms
+- [python-dateutil](https://dateutil.readthedocs.io/en/stable/) — date and timezone handling
 
 ## Troubleshooting
 
-### Common Issues and Solutions
+### Getting 0 rows
 
-1. **`StaleElementReferenceException` Errors**
+Forex Factory may block continuous requests. Use `scrape_2026.sh` which scrapes month by month with delays between requests.
 
-   **Cause:** The web page's DOM has changed, making the reference to the web element invalid.
+### Chrome version mismatch
 
-   **Solution:**
-   - Increase the wait time using `WebDriverWait`.
-   - Re-fetch the web element after certain actions.
-   - Implement retry mechanisms.
+Check your installed Chrome version and update `scraper.py`:
 
-2. **CAPTCHA or Cloudflare Challenges**
+```python
+driver = uc.Chrome(version_main=134)  # match your Chrome version
+```
 
-   **Cause:** Forex Factory may employ CAPTCHA or Cloudflare protection to prevent automated scraping.
+### StaleElementReferenceException
 
-   **Solution:**
-   - Use `undetected-chromedriver` to bypass some protections.
-   - Implement delays between requests to mimic human behavior.
-   - Use proxies if necessary.
-   - Be mindful of the scraping rate to avoid IP bans.
+The scraper has built-in retry logic. If it persists, re-run the same date range — incremental mode will skip already-scraped events.
 
-3. **Incorrect Date Parsing**
+### CAPTCHA / Cloudflare blocks
 
-   **Cause:** Mismatch between the date format in the CSV and the expected format in the script.
-
-   **Solution:**
-   - Ensure that dates in the CSV are in ISO format (`YYYY-MM-DDTHH:MM:SS`).
-   - Modify the `get_last_datetime_from_csv` function if your date format differs.
-
-4. **Missing or Incorrect XPath Selectors**
-
-   **Cause:** Changes in the Forex Factory website structure leading to incorrect XPath selectors.
-
-   **Solution:**
-   - Verify the current structure of the Forex Factory website.
-   - Update XPath selectors in the scraper accordingly.
-
-5. **Browser Driver Issues**
-
-   **Cause:** Incompatible or outdated ChromeDriver versions.
-
-   **Solution:**
-   - Ensure that `undetected-chromedriver` is up to date.
-   - Verify that Google Chrome is updated to the latest version.
-
-### Viewing Logs
-
-Logs provide detailed information about the scraping process and can help identify issues.
-
-- **Info Logs:** Provide general information about the scraping progress.
-- **Warning Logs:** Indicate non-critical issues that do not stop the scraper.
-- **Error Logs:** Highlight critical issues that may require attention.
-
-Ensure that your terminal or log files capture these logs for effective debugging.
-
-## Contributing
-
-Contributions are welcome! If you encounter bugs or have suggestions for improvements, feel free to open an issue or submit a pull request.
-
-### Steps to Contribute
-
-1. **Fork the Repository**
-
-2. **Create a Feature Branch**
-
-   ```bash
-   git checkout -b feature/YourFeatureName
-   ```
-
-3. **Commit Your Changes**
-
-   ```bash
-   git commit -m "Add your message here"
-   ```
-
-4. **Push to the Branch**
-
-   ```bash
-   git push origin feature/YourFeatureName
-   ```
-
-5. **Open a Pull Request**
-
-   Provide a clear description of your changes and the problem they solve.
+- `undetected-chromedriver` handles most cases automatically
+- Increase the sleep delay between months in `scrape_2026.sh` if needed
 
 ## License
 
@@ -242,5 +148,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-**Disclaimer:** This scraper is intended for personal use and educational purposes only. Ensure compliance with Forex Factory's [Terms of Service](https://www.forexfactory.com/disclaimer) and avoid violating any usage policies. Use responsibly.
-```
+**Disclaimer:** For personal and educational use only. Ensure compliance with Forex Factory's [Terms of Service](https://www.forexfactory.com/disclaimer).
