@@ -16,7 +16,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def scrape_incremental(from_date, to_date, output_csv, tzname="Asia/Tehran", scrape_details=False, impact_filter=None, keep_currencies=None):
+def scrape_incremental(from_date, to_date, output_csv, tzname="Asia/Bangkok", scrape_details=False, impact_filter=None, keep_currencies=None):
     """
     Example: day-by-day approach but we only re-scrape if day is missing or incomplete.
     For simplicity, let's re-scrape entire range. Then we can add logic if needed.

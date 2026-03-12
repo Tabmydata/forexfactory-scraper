@@ -13,8 +13,8 @@ class TestDetailData(unittest.TestCase):
         result = detail_data_to_string(data)
         self.assertNotIn("\n", result)
         self.assertNotIn("\r", result)
-        # انتظار داریم حتماً آنها با فاصله جایگزین شده باشند
-        # شکل کلی مثلاً: "Description: Line1 Line2 | Speaker: Name Lastname"
+        # newlines must be replaced with spaces
+        # expected format: "Description: Line1 Line2 | Speaker: Name Lastname"
         expected = "Description: Line1 Line2 | Speaker: Name Lastname"
         self.assertEqual(result, expected)
 

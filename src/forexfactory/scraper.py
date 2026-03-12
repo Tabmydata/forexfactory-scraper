@@ -178,7 +178,7 @@ def scrape_day(driver, the_date: datetime, existing_df: pd.DataFrame, scrape_det
     return df_day_new
 
 
-def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str, tzname="Asia/Tehran",
+def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str, tzname="Asia/Bangkok",
                         scrape_details=False, impact_filter=None, keep_currencies=None):
     from .csv_util import ensure_csv_header, read_existing_data, merge_new_data, write_data_to_csv
 

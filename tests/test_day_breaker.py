@@ -26,21 +26,21 @@ class MockWebElement:
 class TestDayBreakerWithMock(unittest.TestCase):
 
     def test_valid_daybreaker_row(self):
-        tz = gettz("Asia/Tehran")
+        tz = gettz("Asia/Bangkok")
         fallback = datetime(2025, 1, 1, tzinfo=tz)
         # Suppose row's day-breaker cell text is "Sun Jan 5"
         row_mock = MockWebElement("Sun Jan 5")
-        result = get_day_from_day_breaker(row_mock, fallback, "Asia/Tehran")
+        result = get_day_from_day_breaker(row_mock, fallback, "Asia/Bangkok")
         self.assertEqual(result.year, 2025)
         self.assertEqual(result.month, 1)
         self.assertEqual(result.day, 5)
 
     def test_invalid_daybreaker_row(self):
-        tz = gettz("Asia/Tehran")
+        tz = gettz("Asia/Bangkok")
         fallback = datetime(2025, 1, 1, tzinfo=tz)
         # Suppose row's day-breaker cell text is "????"
         row_mock = MockWebElement("????")
-        result = get_day_from_day_breaker(row_mock, fallback, "Asia/Tehran")
+        result = get_day_from_day_breaker(row_mock, fallback, "Asia/Bangkok")
         self.assertIsNone(result)
 
 if __name__ == '__main__':

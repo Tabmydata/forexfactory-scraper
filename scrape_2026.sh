@@ -32,8 +32,8 @@ for MONTH in "${MONTHS[@]}"; do
     --csv econ_2026.csv \
     --tz Asia/Bangkok
 
-  echo "Done $START → $END. Sleeping 30s..."
-  sleep 30
+  echo "Done $START → $END. Sleeping 45s..."
+  sleep 45
 done
 
 echo "========================================="
