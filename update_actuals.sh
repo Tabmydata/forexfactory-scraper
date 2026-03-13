@@ -7,8 +7,15 @@ source venv/bin/activate
 [ -f .env.local ] && source .env.local
 
 # Scrape from 2 days ago to tomorrow to capture actuals for today and yesterday
-START=$(date -v-2d +%Y-%m-%d)
-END=$(date -v+1d +%Y-%m-%d)
+if date -v-2d +%Y-%m-%d &>/dev/null 2>&1; then
+  # macOS
+  START=$(date -v-2d +%Y-%m-%d)
+  END=$(date -v+1d +%Y-%m-%d)
+else
+  # Linux/Ubuntu
+  START=$(date -d '-2 days' +%Y-%m-%d)
+  END=$(date -d '+1 day' +%Y-%m-%d)
+fi
 
 echo "[$(date '+%Y-%m-%d %H:%M')] Updating actuals: $START → $END"
 

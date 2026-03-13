@@ -17,7 +17,7 @@ A robust web scraper for [Forex Factory](https://www.forexfactory.com/) economic
 - **Incremental Scraping:** Only fetches new or updated events, skipping already-scraped data
 - **Daily Actual Updates:** Automated script to update actual values every 4-6 hours via cron
 - **Flexible Date Range:** Specify any start/end date range
-- **Timezone Support:** Defaults to `Asia/Bangkok` (UTC+7)
+- **Timezone Support:** Defaults to `UTC`
 - **JSON Export:** Convert CSV output to JSON for backend consumption
 - **Filtering:** Filter by impact level and currency
 
@@ -59,7 +59,7 @@ A robust web scraper for [Forex Factory](https://www.forexfactory.com/) economic
 | `--start` | Yes | — | Start date (YYYY-MM-DD) |
 | `--end` | Yes | — | End date (YYYY-MM-DD) |
 | `--csv` | No | `forex_factory_cache.csv` | Output CSV file path |
-| `--tz` | No | `Asia/Bangkok` | Timezone |
+| `--tz` | No | `UTC` | Timezone |
 | `--details` | No | false | Scrape detailed event info |
 | `--impact` | No | all | Filter by impact: `high,medium,low` |
 | `--keep-currencies` | No | all | Filter by currency: `USD EUR GBP` |

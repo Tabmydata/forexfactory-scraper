@@ -91,6 +91,19 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
 
         event_text = event_el.text.strip()
         actual_text = actual_el.text.strip()
+        # ForexFactory puts better/worse on the td or on a child span
+        actual_class = actual_el.get_attribute("class") or ""
+        try:
+            actual_span = actual_el.find_element(By.XPATH, './/span')
+            actual_class = actual_class + " " + (actual_span.get_attribute("class") or "")
+        except Exception:
+            pass
+        if "better" in actual_class:
+            actual_dir = "better"
+        elif "worse" in actual_class:
+            actual_dir = "worse"
+        else:
+            actual_dir = ""
         forecast_text = forecast_el.text.strip()
         previous_text = previous_el.text.strip()
 
@@ -162,6 +175,7 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
             "Impact": impact_text,
             "Event": event_text,
             "Actual": actual_text,
+            "ActualDir": actual_dir,
             "Forecast": forecast_text,
             "Previous": previous_text,
             "Detail": detail_str
@@ -180,7 +194,7 @@ def scrape_day(driver, the_date: datetime, existing_df: pd.DataFrame, scrape_det
 
 def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str, tzname="Asia/Bangkok",
                         scrape_details=False, impact_filter=None, keep_currencies=None):
-    from .csv_util import ensure_csv_header, read_existing_data, merge_new_data, write_data_to_csv
+    from .csv_util import ensure_csv_header, read_existing_data, write_data_to_csv
 
     ensure_csv_header(output_csv)
     existing_df = read_existing_data(output_csv)
@@ -205,16 +219,48 @@ def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str,
             if keep_currencies and not df_new.empty:
                 df_new = df_new[df_new['Currency'].isin(keep_currencies)]
 
-            if not df_new.empty:
-                merged_df = merge_new_data(existing_df, df_new)
-                new_rows = len(merged_df) - len(existing_df)
-                if new_rows > 0:
-                    logger.info(f"Added/Updated {new_rows} rows for {current_day.date()}")
-                existing_df = merged_df
-                total_new += new_rows
+            day_str = current_day.date().isoformat()
+            existing_day = existing_df[existing_df["DateTime"].str.startswith(day_str)].copy()
 
-                # Save updated data to CSV after processing the day's data.
-                write_data_to_csv(existing_df, output_csv)
+            if not df_new.empty:
+                # Preserve Actual/ActualDir/Detail from existing rows where new scrape has empty values
+                if not existing_day.empty:
+                    def make_key(row):
+                        return f"{str(row['DateTime']).strip()}_{str(row['Currency']).strip()}_{str(row['Event']).strip()}"
+                    existing_day['_key'] = existing_day.apply(make_key, axis=1)
+                    existing_lookup = existing_day.set_index('_key')
+
+                    def enrich_row(row):
+                        key = f"{str(row['DateTime']).strip()}_{str(row['Currency']).strip()}_{str(row['Event']).strip()}"
+                        if key in existing_lookup.index:
+                            ex = existing_lookup.loc[key]
+                            if isinstance(ex, pd.DataFrame):
+                                ex = ex.iloc[0]
+                            for field in ('Actual', 'ActualDir', 'Detail'):
+                                new_val = str(row.get(field, '')).strip()
+                                ex_field = ex.get(field)
+                                ex_val = str(ex_field).strip() if pd.notna(ex_field) else ''
+                                if not new_val and ex_val:
+                                    row[field] = ex_val
+                        return row
+
+                    df_new = df_new.apply(enrich_row, axis=1)
+
+            # Replace this day's rows entirely (syncs deletions from FF)
+            existing_df = existing_df[~existing_df["DateTime"].str.startswith(day_str)]
+
+            if not df_new.empty:
+                existing_df = pd.concat([existing_df, df_new], ignore_index=True)
+
+            added = len(df_new) if not df_new.empty else 0
+            removed = len(existing_day)
+            net = added - removed
+            if net != 0 or added > 0:
+                logger.info(f"{current_day.date()}: {'+' if net >= 0 else ''}{net} net ({added} from FF, {removed} previously stored)")
+            total_new += max(0, net)
+
+            # Save updated data to CSV after processing the day's data.
+            write_data_to_csv(existing_df, output_csv)
 
             current_day += timedelta(days=1)
     finally:
@@ -232,4 +278,4 @@ def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str,
 
     # Final save (if needed)
     write_data_to_csv(existing_df, output_csv)
-    logger.info(f"Done. Total new/updated rows: {total_new}")
+    logger.info(f"Done. Total new rows: {total_new}")

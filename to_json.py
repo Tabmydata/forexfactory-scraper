@@ -19,9 +19,10 @@ def convert(input_csv, output_json):
                 'country':  row['Currency'].strip(),
                 'date':     row['DateTime'].strip(),
                 'impact':   IMPACT_MAP.get(row['Impact'].strip(), 'Low'),
-                'forecast': row['Forecast'].strip(),
-                'previous': row['Previous'].strip(),
-                'actual':   row['Actual'].strip(),
+                'forecast':    row['Forecast'].strip(),
+                'previous':    row['Previous'].strip(),
+                'actual':      row['Actual'].strip(),
+                'actual_dir':  row.get('ActualDir', '').strip(),
             })
 
     with open(output_json, 'w', encoding='utf-8') as f:
