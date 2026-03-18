@@ -3,7 +3,7 @@
 cd "$(dirname "$0")"
 source venv/bin/activate
 
-# Load local env if exists (for local testing)
+[ -f .env ] && source .env
 [ -f .env.local ] && source .env.local
 
 # Scrape from 2 days ago to tomorrow to capture actuals for today and yesterday
