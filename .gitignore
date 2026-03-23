@@ -4,11 +4,14 @@ logs_file
 chromedriver.exe
 venv/
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
 econ_2026.csv
 econ_2026.json
 *.log
 DEPLOYMENT_OPTIONS.md
 SERVER_SETUP.md
 .env.local
+.env
+output/
+dist/
