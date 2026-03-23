@@ -15,6 +15,7 @@ from selenium.common.exceptions import (
     ElementClickInterceptedException,
     StaleElementReferenceException
 )
+import platform
 import undetected_chromedriver as uc
 
 from .csv_util import ensure_csv_header, read_existing_data, write_data_to_csv, merge_new_data
@@ -198,6 +199,12 @@ def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str,
 
     ensure_csv_header(output_csv)
     existing_df = read_existing_data(output_csv)
+
+    is_linux = platform.system() == 'Linux'
+    if is_linux:
+        from pyvirtualdisplay import Display
+        display = Display(visible=0, size=(1400, 1000))
+        display.start()
 
     driver = uc.Chrome(version_main=145)
     driver.set_window_size(1400, 1000)
