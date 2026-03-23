@@ -57,6 +57,13 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         return pd.DataFrame(
             columns=["DateTime", "Currency", "Impact", "Event", "Actual", "Forecast", "Previous", "Detail"])
 
+    try:
+        browser_tz = driver.execute_script("return Intl.DateTimeFormat().resolvedOptions().timeZone")
+        browser_offset = driver.execute_script("return -new Date().getTimezoneOffset()")
+        logger.info(f"FF using browser timezone: {browser_tz} (UTC{'+' if browser_offset >= 0 else ''}{browser_offset // 60})")
+    except Exception:
+        pass
+
     rows = driver.find_elements(By.XPATH, '//tr[contains(@class,"calendar__row")]')
     data_list = []
     current_day = the_date
