@@ -3,24 +3,23 @@
 cd "$(dirname "$0")"
 source venv/bin/activate
 
-MONTHS=(
-  "2026-01-01 2026-01-31"
-  "2026-02-01 2026-02-28"
-  "2026-03-01 2026-03-31"
-  "2026-04-01 2026-04-30"
-  "2026-05-01 2026-05-31"
-  "2026-06-01 2026-06-30"
-  "2026-07-01 2026-07-31"
-  "2026-08-01 2026-08-31"
-  "2026-09-01 2026-09-30"
-  "2026-10-01 2026-10-31"
-  "2026-11-01 2026-11-30"
-  "2026-12-01 2026-12-31"
-)
+YEAR=${1:-$(date +%Y)}
+CSV="econ_${YEAR}.csv"
+JSON="econ_${YEAR}.json"
 
-for MONTH in "${MONTHS[@]}"; do
-  START=$(echo $MONTH | cut -d' ' -f1)
-  END=$(echo $MONTH | cut -d' ' -f2)
+# Days per month (handle leap year for Feb)
+days_in_month() {
+  local y=$1 m=$2
+  case $m in
+    01|03|05|07|08|10|12) echo 31 ;;
+    04|06|09|11) echo 30 ;;
+    02) [ $(( y % 4 == 0 && (y % 100 != 0 || y % 400 == 0) )) -eq 1 ] && echo 29 || echo 28 ;;
+  esac
+}
+
+for m in 01 02 03 04 05 06 07 08 09 10 11 12; do
+  START="${YEAR}-${m}-01"
+  END="${YEAR}-${m}-$(days_in_month $YEAR $m)"
 
   echo "========================================="
   echo "Scraping $START → $END"
@@ -29,7 +28,7 @@ for MONTH in "${MONTHS[@]}"; do
   python3 -m src.forexfactory.main \
     --start "$START" \
     --end "$END" \
-    --csv econ_2026.csv \
+    --csv "$CSV" \
     --tz Asia/Bangkok
 
   echo "Done $START → $END. Sleeping 45s..."
@@ -38,5 +37,5 @@ done
 
 echo "========================================="
 echo "All months done! Converting to JSON..."
-python3 to_json.py econ_2026.csv econ_2026.json
-echo "Output: econ_2026.json"
+python3 to_json.py "$CSV" "$JSON"
+echo "Output: $JSON"

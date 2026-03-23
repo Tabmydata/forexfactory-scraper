@@ -206,7 +206,7 @@ def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str,
         display = Display(visible=0, size=(1400, 1000))
         display.start()
 
-    driver = uc.Chrome(version_main=145)
+    driver = uc.Chrome(version_main=146)
     driver.set_window_size(1400, 1000)
     driver.set_page_load_timeout(300)  # Increase timeout to 5 minutes
 
@@ -282,6 +282,8 @@ def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str,
                 logger.error(f"Error closing WebDriver: {e}")
             finally:
                 driver = None
+        if is_linux and 'display' in locals():
+            display.stop()
 
     # Final save (if needed)
     write_data_to_csv(existing_df, output_csv)
