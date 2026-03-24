@@ -5,7 +5,6 @@ import re
 import logging
 import pandas as pd
 from datetime import datetime, timedelta
-from dateutil.tz import gettz
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -57,13 +56,28 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         return pd.DataFrame(
             columns=["DateTime", "Currency", "Impact", "Event", "Actual", "Forecast", "Previous", "Detail"])
 
-    browser_offset_minutes = 420
+    ff_offset_minutes = 420  # default Bangkok
     try:
-        browser_tz = driver.execute_script("return Intl.DateTimeFormat().resolvedOptions().timeZone")
-        browser_offset_minutes = driver.execute_script("return -new Date().getTimezoneOffset()")
-        logger.info(f"FF using browser timezone: {browser_tz} (UTC{'+' if browser_offset_minutes >= 0 else ''}{browser_offset_minutes // 60})")
-    except Exception:
-        pass
+        from datetime import timezone as _dtz
+        tz_el = driver.find_element(By.XPATH, '//a[@href="/timezone"]')
+        ff_time_str = tz_el.text.strip().lower()
+        m_clock = re.match(r'(\d{1,2}):(\d{2})(am|pm)?', ff_time_str)
+        ff_h = int(m_clock.group(1))
+        ff_m = int(m_clock.group(2))
+        if m_clock.group(3) == 'pm' and ff_h < 12:
+            ff_h += 12
+        elif m_clock.group(3) == 'am' and ff_h == 12:
+            ff_h = 0
+        now_utc = datetime.now(_dtz.utc)
+        diff = (ff_h * 60 + ff_m) - (now_utc.hour * 60 + now_utc.minute)
+        if diff > 720:
+            diff -= 1440
+        elif diff < -720:
+            diff += 1440
+        ff_offset_minutes = diff
+        logger.info(f"FF clock: {ff_time_str}, UTC: {now_utc.strftime('%H:%M')} → offset UTC{'+' if ff_offset_minutes >= 0 else ''}{ff_offset_minutes // 60}")
+    except Exception as e:
+        logger.warning(f"Could not detect FF timezone: {e}")
 
     rows = driver.find_elements(By.XPATH, '//tr[contains(@class,"calendar__row")]')
     data_list = []
@@ -120,7 +134,7 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         event_dt = current_day
         time_lower = time_text.lower()
         if not time_lower and last_clock_time is not None:
-            event_dt = event_dt.replace(hour=last_clock_time[0], minute=last_clock_time[1], second=0)
+            event_dt = last_clock_time
         elif "day" in time_lower:
             event_dt = event_dt.replace(hour=23, minute=59, second=59)
         elif "data" in time_lower:
@@ -135,13 +149,11 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
                     hh += 12
                 if ampm == 'am' and hh == 12:
                     hh = 0
-                # Parse time in browser's actual timezone, then convert to Bangkok
+                # Parse time in FF's actual display timezone, store with that offset
                 from datetime import timezone as _tz
-                browser_tz_obj = _tz(timedelta(minutes=browser_offset_minutes))
-                bkk_tz_obj = gettz('Asia/Bangkok')
-                event_dt_browser = event_dt.replace(hour=hh, minute=mm, second=0, tzinfo=browser_tz_obj)
-                event_dt = event_dt_browser.astimezone(bkk_tz_obj)
-                last_clock_time = (event_dt.hour, event_dt.minute)
+                ff_tz_obj = _tz(timedelta(minutes=ff_offset_minutes))
+                event_dt = event_dt.replace(hour=hh, minute=mm, second=0, tzinfo=ff_tz_obj)
+                last_clock_time = event_dt
 
         # Compute a unique key for the event using DateTime, Currency, and Event
         unique_key = f"{event_dt.isoformat()}_{currency_text}_{event_text}"
