@@ -57,10 +57,11 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         return pd.DataFrame(
             columns=["DateTime", "Currency", "Impact", "Event", "Actual", "Forecast", "Previous", "Detail"])
 
+    browser_offset_minutes = 420
     try:
         browser_tz = driver.execute_script("return Intl.DateTimeFormat().resolvedOptions().timeZone")
-        browser_offset = driver.execute_script("return -new Date().getTimezoneOffset()")
-        logger.info(f"FF using browser timezone: {browser_tz} (UTC{'+' if browser_offset >= 0 else ''}{browser_offset // 60})")
+        browser_offset_minutes = driver.execute_script("return -new Date().getTimezoneOffset()")
+        logger.info(f"FF using browser timezone: {browser_tz} (UTC{'+' if browser_offset_minutes >= 0 else ''}{browser_offset_minutes // 60})")
     except Exception:
         pass
 
@@ -134,8 +135,13 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
                     hh += 12
                 if ampm == 'am' and hh == 12:
                     hh = 0
-                event_dt = event_dt.replace(hour=hh, minute=mm, second=0)
-                last_clock_time = (hh, mm)
+                # Parse time in browser's actual timezone, then convert to Bangkok
+                from datetime import timezone as _tz
+                browser_tz_obj = _tz(timedelta(minutes=browser_offset_minutes))
+                bkk_tz_obj = gettz('Asia/Bangkok')
+                event_dt_browser = event_dt.replace(hour=hh, minute=mm, second=0, tzinfo=browser_tz_obj)
+                event_dt = event_dt_browser.astimezone(bkk_tz_obj)
+                last_clock_time = (event_dt.hour, event_dt.minute)
 
         # Compute a unique key for the event using DateTime, Currency, and Event
         unique_key = f"{event_dt.isoformat()}_{currency_text}_{event_text}"
