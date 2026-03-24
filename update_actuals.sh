@@ -34,9 +34,7 @@ curl -s -X POST "${ECON_UPLOAD_URL}/calendar/econ/upload" \
   -H "Content-Type: application/json" \
   -H "x-upload-secret: ${ECON_UPLOAD_SECRET}" \
   --data-binary @econ_2026.json \
-  && echo "[$(date '+%Y-%m-%d %H:%M')] Upload success." \
+  && { echo "[$(date '+%Y-%m-%d %H:%M')] Upload success."; rm -f econ_2026.csv econ_2026.json; } \
   || echo "[$(date '+%Y-%m-%d %H:%M')] Upload FAILED."
-# After verifying timezone is correct, add cleanup:
-# && { echo "...success."; rm -f econ_2026.csv econ_2026.json; }
 
 echo "[$(date '+%Y-%m-%d %H:%M')] Done."
