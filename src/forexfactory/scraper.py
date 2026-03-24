@@ -131,7 +131,9 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         previous_text = previous_el.text.strip()
 
         # Determine event time based on text
-        event_dt = current_day
+        from datetime import timezone as _tz
+        ff_tz_obj = _tz(timedelta(minutes=ff_offset_minutes))
+        event_dt = current_day.replace(tzinfo=ff_tz_obj)
         time_lower = time_text.lower()
         if not time_lower and last_clock_time is not None:
             event_dt = last_clock_time
@@ -150,8 +152,6 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
                 if ampm == 'am' and hh == 12:
                     hh = 0
                 # Parse time in FF's actual display timezone, store with that offset
-                from datetime import timezone as _tz
-                ff_tz_obj = _tz(timedelta(minutes=ff_offset_minutes))
                 event_dt = event_dt.replace(hour=hh, minute=mm, second=0, tzinfo=ff_tz_obj)
                 last_clock_time = event_dt
 
