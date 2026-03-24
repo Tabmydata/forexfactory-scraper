@@ -5,7 +5,6 @@ import os
 import logging
 import argparse
 from datetime import datetime
-from dateutil.tz import gettz
 
 from .incremental import scrape_incremental
 
@@ -28,9 +27,8 @@ def main():
 
     args = parser.parse_args()
 
-    tz = gettz(args.tz)
-    from_date = datetime.fromisoformat(args.start).replace(tzinfo=tz)
-    to_date = datetime.fromisoformat(args.end).replace(tzinfo=tz)
+    from_date = datetime.fromisoformat(args.start)
+    to_date = datetime.fromisoformat(args.end)
 
     impact_filter = [i.strip().lower() for i in args.impact.split(',')] if args.impact else None
 
