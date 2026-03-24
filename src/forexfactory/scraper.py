@@ -214,8 +214,13 @@ def scrape_range_pandas(from_date: datetime, to_date: datetime, output_csv: str,
         display.start()
 
     driver = uc.Chrome(version_main=146)
+    driver.execute_cdp_cmd('Emulation.setTimezoneOverride', {'timezoneId': 'Asia/Bangkok'})
     driver.set_window_size(1400, 1000)
     driver.set_page_load_timeout(300)  # Increase timeout to 5 minutes
+
+    driver.get('https://www.forexfactory.com')
+    driver.add_cookie({'name': 'timezone', 'value': 'Bangkok', 'domain': 'www.forexfactory.com'})
+    driver.add_cookie({'name': 'ff_timezone', 'value': 'Bangkok', 'domain': 'www.forexfactory.com'})
 
     total_new = 0
     day_count = (to_date - from_date).days + 1

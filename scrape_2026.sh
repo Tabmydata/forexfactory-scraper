@@ -2,6 +2,7 @@
 
 cd "$(dirname "$0")"
 source venv/bin/activate
+export TZ=Asia/Bangkok
 
 YEAR=${1:-$(date +%Y)}
 CSV="econ_${YEAR}.csv"
