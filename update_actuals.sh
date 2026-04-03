@@ -23,18 +23,17 @@ echo "[$(date '+%Y-%m-%d %H:%M')] Updating actuals: $START → $END"
 python3 -m src.forexfactory.main \
   --start "$START" \
   --end "$END" \
-  --csv econ_2026.csv \
-  --tz Asia/Bangkok
+  --csv econ_2026.csv
 
 # Re-generate JSON from updated CSV
 python3 to_json.py econ_2026.csv econ_2026.json
 
 # Upload JSON to tmd-auth server
-curl -s -X POST "${ECON_UPLOAD_URL}/calendar/econ/upload" \
-  -H "Content-Type: application/json" \
-  -H "x-upload-secret: ${ECON_UPLOAD_SECRET}" \
-  --data-binary @econ_2026.json \
-  && { echo "[$(date '+%Y-%m-%d %H:%M')] Upload success."; rm -f econ_2026.csv econ_2026.json; } \
-  || echo "[$(date '+%Y-%m-%d %H:%M')] Upload FAILED."
+# curl -s -X POST "${ECON_UPLOAD_URL}/calendar/econ/upload" \
+#   -H "Content-Type: application/json" \
+#   -H "x-upload-secret: ${ECON_UPLOAD_SECRET}" \
+#   --data-binary @econ_2026.json \
+#   && { echo "[$(date '+%Y-%m-%d %H:%M')] Upload success."; } \
+#   || echo "[$(date '+%Y-%m-%d %H:%M')] Upload FAILED."
 
 echo "[$(date '+%Y-%m-%d %H:%M')] Done."

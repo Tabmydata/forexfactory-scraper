@@ -74,7 +74,7 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
             diff -= 1440
         elif diff < -720:
             diff += 1440
-        ff_offset_minutes = diff
+        ff_offset_minutes = round(diff / 15) * 15
         logger.info(f"FF clock: {ff_time_str}, UTC: {now_utc.strftime('%H:%M')} → offset UTC{'+' if ff_offset_minutes >= 0 else ''}{ff_offset_minutes // 60}")
     except Exception as e:
         logger.warning(f"Could not detect FF timezone: {e}")
@@ -138,9 +138,9 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         if not time_lower and last_clock_time is not None:
             event_dt = last_clock_time
         elif "day" in time_lower:
-            event_dt = event_dt.replace(hour=23, minute=59, second=59)
+            event_dt = event_dt.replace(hour=12, minute=0, second=0)
         elif "data" in time_lower:
-            event_dt = event_dt.replace(hour=0, minute=0, second=1)
+            event_dt = event_dt.replace(hour=12, minute=0, second=1)
         else:
             m = re.match(r'(\d{1,2}):(\d{2})(am|pm)', time_lower)
             if m:
@@ -154,6 +154,8 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
                 # Parse time in FF's actual display timezone, store with that offset
                 event_dt = event_dt.replace(hour=hh, minute=mm, second=0, tzinfo=ff_tz_obj)
                 last_clock_time = event_dt
+
+        event_dt = event_dt.astimezone(_tz.utc)
 
         # Compute a unique key for the event using DateTime, Currency, and Event
         unique_key = f"{event_dt.isoformat()}_{currency_text}_{event_text}"
