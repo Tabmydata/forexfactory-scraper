@@ -137,10 +137,10 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         time_lower = time_text.lower()
         if not time_lower and last_clock_time is not None:
             event_dt = last_clock_time
-        elif "day" in time_lower:
-            event_dt = event_dt.replace(hour=12, minute=0, second=0)
+        elif "day" in time_lower or "tentative" in time_lower:
+            event_dt = datetime(current_day.year, current_day.month, current_day.day, 0, 0, 0, tzinfo=_tz.utc)
         elif "data" in time_lower:
-            event_dt = event_dt.replace(hour=12, minute=0, second=1)
+            event_dt = datetime(current_day.year, current_day.month, current_day.day, 0, 0, 1, tzinfo=_tz.utc)
         else:
             m = re.match(r'(\d{1,2}):(\d{2})(am|pm)', time_lower)
             if m:
