@@ -15,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Define the CSV columns
-CSV_COLUMNS = ["DateTime", "Currency", "Impact", "Event", "Actual", "ActualDir", "Forecast", "Previous", "Detail"]
+CSV_COLUMNS = ["DateTime", "Currency", "Impact", "Event", "Actual", "ActualDir", "Forecast", "Previous", "Detail", "Url"]
 
 def ensure_csv_header(csv_file):
     """

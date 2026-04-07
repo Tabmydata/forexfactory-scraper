@@ -2,7 +2,6 @@
 
 cd "$(dirname "$0")"
 source venv/bin/activate
-export TZ=Asia/Bangkok
 
 YEAR=${1:-$(date +%Y)}
 CSV="econ_${YEAR}.csv"
@@ -29,7 +28,8 @@ for m in 01 02 03 04 05 06 07 08 09 10 11 12; do
   python3 -m src.forexfactory.main \
     --start "$START" \
     --end "$END" \
-    --csv "$CSV"
+    --csv "$CSV" \
+    --details
 
   echo "Done $START → $END. Sleeping 45s..."
   sleep 45

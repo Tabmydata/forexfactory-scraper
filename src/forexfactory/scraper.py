@@ -75,7 +75,7 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         elif diff < -720:
             diff += 1440
         ff_offset_minutes = round(diff / 15) * 15
-        logger.info(f"FF clock: {ff_time_str}, UTC: {now_utc.strftime('%H:%M')} → offset UTC{'+' if ff_offset_minutes >= 0 else ''}{ff_offset_minutes // 60}")
+        logger.debug(f"FF clock: {ff_time_str}, UTC: {now_utc.strftime('%H:%M')} → offset UTC{'+' if ff_offset_minutes >= 0 else ''}{ff_offset_minutes // 60}")
     except Exception as e:
         logger.warning(f"Could not detect FF timezone: {e}")
 
@@ -160,6 +160,16 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         # Compute a unique key for the event using DateTime, Currency, and Event
         unique_key = f"{event_dt.isoformat()}_{currency_text}_{event_text}"
 
+        # Capture event URL from row's data-event-id
+        detail_url = ""
+        try:
+            event_id = row.get_attribute("data-event-id")
+            if event_id:
+                day_str_url = current_day.strftime('%b').lower() + str(current_day.day) + '.' + str(current_day.year)
+                detail_url = f"https://www.forexfactory.com/calendar?day={day_str_url}#detail={event_id}"
+        except Exception:
+            pass
+
         # Initialize detail string
         detail_str = ""
         if scrape_details:
@@ -206,7 +216,8 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
             "ActualDir": actual_dir,
             "Forecast": forecast_text,
             "Previous": previous_text,
-            "Detail": detail_str
+            "Detail": detail_str,
+            "Url": detail_url,
         })
 
     return pd.DataFrame(data_list)

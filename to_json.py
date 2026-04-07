@@ -7,6 +7,7 @@ IMPACT_MAP = {
     'Medium Impact Expected': 'Medium',
     'Low Impact Expected': 'Low',
     'Holiday': 'Holiday',
+    'Non-Economic': 'Holiday',
 }
 
 def convert(input_csv, output_json):
@@ -16,13 +17,15 @@ def convert(input_csv, output_json):
         for row in reader:
             events.append({
                 'title':    row['Event'].strip(),
-                'country':  row['Currency'].strip(),
+                'country':  row['Currency'].strip().upper(),
                 'date':     row['DateTime'].strip(),
                 'impact':   IMPACT_MAP.get(row['Impact'].strip(), 'Low'),
                 'forecast':    row['Forecast'].strip(),
                 'previous':    row['Previous'].strip(),
                 'actual':      row['Actual'].strip(),
                 'actual_dir':  row.get('ActualDir', '').strip(),
+                'detail':      row.get('Detail', '').strip(),
+                'url':         row.get('Url', '').strip(),
             })
 
     with open(output_json, 'w', encoding='utf-8') as f:
