@@ -137,7 +137,7 @@ def parse_calendar_day(driver, the_date: datetime, scrape_details=False, existin
         time_lower = time_text.lower()
         if not time_lower and last_clock_time is not None:
             event_dt = last_clock_time
-        elif "day" in time_lower or "tentative" in time_lower:
+        elif "day" in time_lower or "tentative" in time_lower or re.search(r'\d+(st|nd|rd|th)', time_lower):
             event_dt = datetime(current_day.year, current_day.month, current_day.day, 0, 0, 0, tzinfo=_tz.utc)
         elif "data" in time_lower:
             event_dt = datetime(current_day.year, current_day.month, current_day.day, 0, 0, 1, tzinfo=_tz.utc)
